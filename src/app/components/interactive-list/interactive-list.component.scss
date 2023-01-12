@@ -1,0 +1,86 @@
+@import '../../../styles.scss';
+
+.interactive-list {
+  min-height: 60px;
+  overflow: hidden;
+  display: block;
+}
+
+.tree-row {
+  width: 100%;
+  height: 20px;
+  font-family: sans-serif;
+  padding: 5px 10px;
+  color: rgba(255, 255, 255, 0.9);
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  font-size: 14px;
+  font-weight: 100;
+
+  div {
+    text-overflow: ellipsis;
+    overflow: hidden; 
+    white-space: nowrap;
+  }
+
+  .file-type-icon {
+    width: 20px;
+    height: 20px;
+  }
+
+  &:hover {
+    background-color: rgba(255, 255, 255, 0.025);
+  }
+}
+
+.mat-mdc-button-touch-target {
+  pointer-events: none;
+  display: none !important;
+}
+
+.cdk-drag-preview {
+  height: 12px !important;
+  width: auto !important;
+  border-radius: 12px;
+  background-color: $blue55;
+  padding: 0px 5px;
+  border: 1px solid $blue50;
+  box-shadow: 0 5px 5px -3px rgba(0, 0, 0, 0.2),
+              0 8px 10px 1px rgba(0, 0, 0, 0.14),
+              0 3px 14px 2px rgba(0, 0, 0, 0.12);
+}
+
+.cdk-drag-placeholder {
+  background-color: rgba(255, 255, 255, 0.025);
+}
+
+
+
+
+
+.mat-mdc-icon-button {
+  border-radius: 0;
+}
+
+.mat-tree-node {
+  color: white;
+  user-select: none;
+  cursor: move;
+}
+
+/* items moving away to make room for drop */
+.cdk-drop-list-dragging .mat-tree-node:not(.cdk-drag-placeholder) {
+  transition: transform 250ms cubic-bezier(0, 0, 0.2, 1);
+}
+/* item being dropped */
+.cdk-drag-animating {
+  transition: transform 200ms cubic-bezier(0, 0, 0.2, 1);
+}
+
+.chevron-icon {
+  width: 14px;
+  height: 14px;
+  filter: $inverted-color;
+  margin: 0 3px;
+}

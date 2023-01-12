@@ -1,0 +1,24 @@
+@import '../../../styles.scss';
+
+.side-panel-main {
+    background-color: $grey20;
+    width: 200px;
+    height: 100%;
+    position: relative;
+}
+
+.resize-handle-right {
+    position: absolute;
+    height: 100%;
+    cursor: col-resize;
+    width: 5px;
+    top: 0;
+    right: -2.5px;
+    z-index: 10;
+    transition: 0.5s;
+    transition-delay: 0.5s;
+
+    &:hover {
+        background-color: $blue50;
+    }
+}
