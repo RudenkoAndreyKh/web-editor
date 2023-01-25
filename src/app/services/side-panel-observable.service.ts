@@ -9,7 +9,7 @@ export class SidePanelObserver {
     private newWidth = new Subject<number>();
     widthSubscriber$ = this.newWidth;
 
-    fileObserver(width: number) {
+    sidePanelWidthObserver(width: number) {
         this.newWidth.next(width);
     }
 } 

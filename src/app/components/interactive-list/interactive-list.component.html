@@ -1,31 +1,48 @@
-<mat-tree [dataSource]="dataSource" [treeControl]="treeControl">
-    <mat-tree-node *matTreeNodeDef="let node" matTreeNodeToggle>
-        <button class="checklist-leaf-node tree-row" [ngClass]="{'drop-above': dragNodeExpandOverArea === 'above' && dragNodeExpandOverNode === node,
+<mat-tree class="list-component" [dataSource]="dataSource" [treeControl]="treeControl">
+
+    <mat-tree-node (click)="selectFile(node)" *matTreeNodeDef="let node; when isTreeContainer" matTreeNodeToggle
+        (contextmenu)="openContextMenu($event, node)">
+        <button
+            [ngClass]="{'drop-above': dragNodeExpandOverArea === 'above' && dragNodeExpandOverNode === node,
                                 'drop-below': dragNodeExpandOverArea === 'below' && dragNodeExpandOverNode === node,
-                                'drop-center': dragNodeExpandOverArea === 'center' && dragNodeExpandOverNode === node}"
+                                'drop-center': dragNodeExpandOverArea === 'center' && dragNodeExpandOverNode === node,
+                                'focused': isFocused(node), 'opened': isOpened(node), 'dragging-over': isDraggingOver(node)}"
+            (dragover)="handleDragOver($event, node);" (dragstart)="handleDragStart($event, node);"
+            (drop)="handleDrop($event, node);" (dragend)="handleDragEnd($event);" class="tree-row tree-container">
+        </button>
+    </mat-tree-node>
+
+    <mat-tree-node (click)="selectFile(node)" *matTreeNodeDef="let node; when isFile" matTreeNodeToggle
+        (contextmenu)="openContextMenu($event, node)">
+        <button
+            [ngClass]="{'drop-above': dragNodeExpandOverArea === 'above' && dragNodeExpandOverNode === node,
+                                'drop-below': dragNodeExpandOverArea === 'below' && dragNodeExpandOverNode === node,
+                                'drop-center': dragNodeExpandOverArea === 'center' && dragNodeExpandOverNode === node,
+                                'focused': isFocused(node), 'opened': isOpened(node), 'dragging-over': isDraggingOver(node)}"
             (change)="checklistSelection.toggle(node);" draggable="true" (dragstart)="handleDragStart($event, node);"
             (dragover)="handleDragOver($event, node);" (drop)="handleDrop($event, node);"
-            (dragend)="handleDragEnd($event);" class="tree-row" mat-icon-button
-            [ngStyle]="{'padding-left': (node.level) * 10 + 15 + 'px'}">
+            (dragend)="handleDragEnd($event);" class="checklist-leaf-node tree-row"
+            [ngStyle]="{'padding-left': (node.level - 1) * 10 + 15 + 'px'}">
             <img class="file-type-icon" [src]="renderIcon(node.name)" alt="file-type">
             <div>{{node.name}}</div>
         </button>
     </mat-tree-node>
 
-    <mat-tree-node (contextmenu)="openContextMenu($event, node)" *matTreeNodeDef="let node; when: isDirectory">
-        <button [ngClass]="{'drop-above': dragNodeExpandOverArea === 'above' && dragNodeExpandOverNode === node,
-        'drop-below': dragNodeExpandOverArea === 'below' && dragNodeExpandOverNode === node,
-        'drop-center': dragNodeExpandOverArea === 'center' && dragNodeExpandOverNode === node}" draggable="true"
-            (dragstart)="handleDragStart($event, node);" (dragover)="handleDragOver($event, node);"
-            (drop)="handleDrop($event, node);" (dragend)="handleDragEnd($event);" class="tree-row" mat-icon-button
-            matTreeNodeToggle [attr.aria-label]="'toggle ' + node.filename"
-            [ngStyle]="{'padding-left': (node.level) * 10 + 15 + 'px'}">
-            <img class="chevron-icon" src="{{treeControl.isExpanded(node) ? 'assets/icons/chevron-right.png' : 'assets/icons/chevron-down.png'}}" alt="chevron">
+    <mat-tree-node (click)="selectFile(node)" (contextmenu)="openContextMenu($event, node)"
+        *matTreeNodeDef="let node; when: isDirectory" matTreeNodeToggle>
+        <button [ngClass]="getDirectoryClasses(node)" draggable="true" (dragstart)="handleDragStart($event, node);"
+            (dragover)="handleDragOver($event, node);" (drop)="handleDrop($event, node);"
+            (dragend)="handleDragEnd($event);" class="tree-row" [attr.aria-label]="'toggle ' + node.filename"
+            [ngStyle]="{'padding-left': (node.level - 1) * 10 + 15 + 'px'}">
+            <img class="chevron-icon"
+                src="{{!treeControl.isExpanded(node) ? 'assets/icons/chevron-right.png' : 'assets/icons/chevron-down.png'}}"
+                alt="chevron">
             <div>
                 {{node.name}}
             </div>
         </button>
     </mat-tree-node>
+
 </mat-tree>
 
 <span #emptyItem></span>

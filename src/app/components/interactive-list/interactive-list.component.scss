@@ -17,6 +17,9 @@
   align-items: center;
   font-size: 14px;
   font-weight: 100;
+  background-color: transparent;
+  border: 0;
+  z-index: 2;
 
   div {
     text-overflow: ellipsis;
@@ -35,7 +38,8 @@
 }
 
 .mat-mdc-button-touch-target {
-  pointer-events: none;
+  background-color: red;
+  pointer-events: none!important;
   display: none !important;
 }
 
@@ -54,10 +58,6 @@
 .cdk-drag-placeholder {
   background-color: rgba(255, 255, 255, 0.025);
 }
-
-
-
-
 
 .mat-mdc-icon-button {
   border-radius: 0;
@@ -83,4 +83,47 @@
   height: 14px;
   filter: $inverted-color;
   margin: 0 3px;
+}
+
+.opened {
+  background-color: rgba(255, 255, 255, 0.1)!important;
+}
+
+.focused {
+  background-color: $blue55!important;
+  outline: 1px solid #007ad385;
+  outline-offset: -1px;
+}
+
+.list-component {
+  z-index: 10;
+}
+
+.click-overflow {
+  display: none;
+  z-index: 9;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+}
+
+.click-overflow-visible {
+  display: block;
+}
+
+.tree-container {
+  position: absolute!important;
+  top: 0!important;
+  bottom: 0!important;
+  left: 0!important;
+  right: 0!important;
+  height: 100%!important;
+  z-index: 1;
+  background-color: transparent!important;
+}
+
+.dragging-over {
+  background-color: rgba(255, 255, 255, 0.1)!important;
 }

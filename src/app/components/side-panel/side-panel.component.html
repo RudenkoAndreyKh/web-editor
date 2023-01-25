@@ -1,6 +1,3 @@
-<!-- <div [style.width.px]="width" class="side-panel-main">
-
-</div> -->
 <div [style.width.px]="width" mwlResizable [enableGhostResize]="false" (resizing)="onResizing($event)" class="side-panel-main">
     <app-interactive-list></app-interactive-list>
     <div class="resize-handle-right" mwlResizeHandle [resizeEdges]="{ right: true }"></div>

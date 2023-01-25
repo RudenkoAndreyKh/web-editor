@@ -1,4 +1,4 @@
-@import '../../../styles.scss';
+@import "../../../styles.scss";
 
 .side-nav {
     width: 40px;
@@ -18,12 +18,12 @@
         }
     }
 
-    .mat-tooltip { 
+    .mat-tooltip {
         color: pink;
         background-color: white;
-        border:  1px solid #eeeeee;
-        border-radius:  3px;
-        font-size:  15px;
-        padding:  10px; 
-        } 
+        border: 1px solid #eeeeee;
+        border-radius: 3px;
+        font-size: 15px;
+        padding: 10px;
+    }
 }
