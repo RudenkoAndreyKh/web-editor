@@ -2,29 +2,32 @@
 
     <mat-tree-node (click)="selectFile(node)" *matTreeNodeDef="let node; when isTreeContainer" matTreeNodeToggle
         (contextmenu)="openContextMenu($event, node)">
-        <button
-            [ngClass]="{'drop-above': dragNodeExpandOverArea === 'above' && dragNodeExpandOverNode === node,
-                                'drop-below': dragNodeExpandOverArea === 'below' && dragNodeExpandOverNode === node,
-                                'drop-center': dragNodeExpandOverArea === 'center' && dragNodeExpandOverNode === node,
-                                'focused': isFocused(node), 'opened': isOpened(node), 'dragging-over': isDraggingOver(node)}"
-            (dragover)="handleDragOver($event, node);" (dragstart)="handleDragStart($event, node);"
-            (drop)="handleDrop($event, node);" (dragend)="handleDragEnd($event);" class="tree-row tree-container">
+        <div (click)="toggleWorkspace(node)" class="workspace-container">
+            <img style="cursor: pointer;" [ngStyle]="{'margin-left': '5px'}" class="chevron-icon workspace"
+                src="{{!treeControl.isExpanded(node) ? 'assets/icons/chevron-right.png' : 'assets/icons/chevron-down.png'}}"
+                alt="chevron">
+            <label style="cursor: pointer;" class="workspace-label">Tree
+                Container</label>
+        </div>
+        <button *ngIf="treeControl.isExpanded(node)" [ngClass]="getDirectoryClasses(node)" (dragover)="handleDragOver($event, node);"
+            (dragstart)="handleDragStart($event, node);" (drop)="handleDrop($event, node);"
+            (dragend)="handleDragEnd($event);" class="tree-row workspace-tree">
         </button>
     </mat-tree-node>
 
-    <mat-tree-node (click)="selectFile(node)" *matTreeNodeDef="let node; when isFile" matTreeNodeToggle
-        (contextmenu)="openContextMenu($event, node)">
-        <button
-            [ngClass]="{'drop-above': dragNodeExpandOverArea === 'above' && dragNodeExpandOverNode === node,
-                                'drop-below': dragNodeExpandOverArea === 'below' && dragNodeExpandOverNode === node,
-                                'drop-center': dragNodeExpandOverArea === 'center' && dragNodeExpandOverNode === node,
-                                'focused': isFocused(node), 'opened': isOpened(node), 'dragging-over': isDraggingOver(node)}"
-            (change)="checklistSelection.toggle(node);" draggable="true" (dragstart)="handleDragStart($event, node);"
-            (dragover)="handleDragOver($event, node);" (drop)="handleDrop($event, node);"
-            (dragend)="handleDragEnd($event);" class="checklist-leaf-node tree-row"
+    <mat-tree-node (click)="selectFile(node)" *matTreeNodeDef="let node; when isFile" matTreeNodeToggle>
+        <!-- (contextmenu)="openContextMenu($event, node)" -->
+        <button id="workspace" [ngClass]="getFileClasses(node)" (change)="checklistSelection.toggle(node);"
+            draggable="true" (dragstart)="handleDragStart($event, node);" (dragover)="handleDragOver($event, node);"
+            (drop)="handleDrop($event, node);" (dragend)="handleDragEnd($event);" class="checklist-leaf-node tree-row"
             [ngStyle]="{'padding-left': (node.level - 1) * 10 + 15 + 'px'}">
             <img class="file-type-icon" [src]="renderIcon(node.name)" alt="file-type">
-            <div>{{node.name}}</div>
+            <div *ngIf="!node.isChangingName">
+                {{node.name}}
+            </div>
+            <input (keyup.enter)="inputChange(node, $event)" [(value)]="node.name" (input)="inputOnChange($event)"
+                *ngIf="node.isChangingName" #nodeInput (blur)="inputChange(node, $event)"
+                [ngStyle]="{'left': (node.level - 1) * 10 + 35 + 'px'}" type="text" />
         </button>
     </mat-tree-node>
 
@@ -37,11 +40,22 @@
             <img class="chevron-icon"
                 src="{{!treeControl.isExpanded(node) ? 'assets/icons/chevron-right.png' : 'assets/icons/chevron-down.png'}}"
                 alt="chevron">
-            <div>
+            <div *ngIf="!node.isChangingName">
                 {{node.name}}
             </div>
+            <input (keyup.enter)="inputChange(node, $event)" [(value)]="node.name" (input)="inputOnChange($event)"
+                *ngIf="node.isChangingName" #nodeInput (blur)="inputChange(node, $event)"
+                [ngStyle]="{'left': (node.level - 1) * 10 + 35 + 'px'}" type="text" />
         </button>
     </mat-tree-node>
+
+    <ng-template #contextMenu let-node>
+        <section class="context-menu">
+            <div (click)="createNewNode(node, 'file')">New File</div>
+            <div (click)="createNewNode(node, 'directory')">New Folder</div>
+            <div (click)="changeNodeName(node)">Rename</div>
+        </section>
+    </ng-template>
 
 </mat-tree>
 

@@ -1,10 +1,14 @@
 import { SelectionModel } from '@angular/cdk/collections';
 import { FlatTreeControl } from '@angular/cdk/tree';
-import { Component, ElementRef, HostListener, OnInit, ViewChild } from '@angular/core';
+import { Component, ElementRef, HostListener, OnInit, TemplateRef, ViewChild, ViewContainerRef } from '@angular/core';
 import { MatTreeFlatDataSource, MatTreeFlattener } from '@angular/material/tree';
 import { FileObserver } from 'src/app/services/file-observable.service';
 import { ChecklistDatabase, TodoItemFlatNode, TodoItemNode } from './checklist-database';
 import { iconList } from '../../enums/file-type-enum';
+import { Overlay, OverlayRef } from '@angular/cdk/overlay';
+import { Subscription, fromEvent } from 'rxjs';
+import { TemplatePortal } from '@angular/cdk/portal';
+import { take, filter } from 'rxjs/operators';
 
 @Component({
   selector: 'app-interactive-list',
@@ -41,14 +45,27 @@ export class InteractiveListComponent implements OnInit {
   dragNodeExpandOverTime: number = 0;
   dragNodeExpandOverArea: string = '';
 
+  isChangingNamePossible: boolean = false;
+
   focusedFile: TodoItemNode | null = null;
+  defocusedFile: TodoItemNode | null = null;
   openedFiles: TodoItemNode[] | undefined;
-  @ViewChild('emptyItem') emptyItem!: ElementRef;
+
+  overlayRef!: OverlayRef | null;
+
+  sub!: Subscription;
+
+  clickCount: number = 0;
+
+  @ViewChild('contextMenu') contextMenu!: TemplateRef<any>;
+  @ViewChild('nodeInput') nodeInput!: ElementRef;
 
   constructor(
     private database: ChecklistDatabase,
     private FileObserver: FileObserver,
-    private eRef: ElementRef
+    private eRef: ElementRef,
+    public overlay: Overlay,
+    public viewContainerRef: ViewContainerRef
   ) {
     this.treeFlattener = new MatTreeFlattener(this.transformer, this.getLevel, this.isExpandable, this.getChildren);
     this.treeControl = new FlatTreeControl<TodoItemFlatNode>(this.getLevel, this.isExpandable);
@@ -61,7 +78,7 @@ export class InteractiveListComponent implements OnInit {
   }
 
   @HostListener('document:click', ['$event'])
-  clickout(event: any) {
+  clickoutComponent(event: any) {
     if (!this.eRef.nativeElement.contains(event.target)) {
       this.removeFocus();
     }
@@ -71,20 +88,38 @@ export class InteractiveListComponent implements OnInit {
     this.FileObserver.focusedFileSubscriber$
       .subscribe(focusedFile => {
         this.focusedFile = focusedFile;
-      })
+      });
+
+    this.FileObserver.defocusedFileSubscriber$
+      .subscribe(defocusedFile => {
+        this.defocusedFile = defocusedFile;
+      });
+
+    this.FileObserver.openedFilesSubscriber$
+      .subscribe(openedFiles => {
+        this.openedFiles = openedFiles;
+      });
+
     const firstElement = [...this.flatNodeMap][0][0];
-
-    console.log(this.treeFlattener);
-
 
     if (firstElement) {
       this.treeControl.expand(firstElement);
     }
   }
 
+  ngAfterViewChecked() {
+    if (this.nodeInput) {
+      this.nodeInput.nativeElement.focus();
+    }
+  }
+
+  inputOnChange(e: any) {
+
+  }
+
   renderIcon(fileName: string) {
     const re = /(?:\.([^.]+))?$/;
-    const fileType = re.exec(fileName);
+    const fileType = re.exec(!fileName && this.nodeInput?.nativeElement.value || fileName);
 
     if (fileType && iconList[fileType[0]]) {
       return `assets/icons/file-types/${iconList[fileType[0]]}.svg`;
@@ -112,17 +147,19 @@ export class InteractiveListComponent implements OnInit {
   /**
    * Transformer to convert nested node to flat node. Record the nodes in maps for later use.
    */
-  transformer = (node: TodoItemNode, level: number) => {
+  transformer = (node: any, level: number) => {
     const existingNode = this.nestedNodeMap.get(node);
-    const flatNode = existingNode && existingNode.name === node.name
+    const flatNode: any = existingNode && existingNode.name === node.name
       ? existingNode
       : new TodoItemFlatNode();
+
     flatNode.name = node.name;
     flatNode.level = level;
     flatNode.expandable = (node?.children && node.children.length > 0);
     flatNode.isFile = node.isFile;
-    flatNode.isFocused = node.isFocused;
     flatNode.id = node.id;
+    flatNode.isChangingName = node.isChangingName;
+
     this.flatNodeMap.set(flatNode, node);
     this.nestedNodeMap.set(node, flatNode);
 
@@ -151,18 +188,11 @@ export class InteractiveListComponent implements OnInit {
       : this.checklistSelection.deselect(...descendants);
   }
 
-  /** Select the category so we can insert the new item. */
-  addNewItem(node: TodoItemFlatNode) {
-    const parentNode = this.flatNodeMap.get(node);
-    // this.database.insertItem(parentNode!, '');
-    this.treeControl.expand(node);
-  }
-
-  /** Save the node to database */
-  saveNode(node: TodoItemFlatNode, newName: string) {
-    const nestedNode = this.flatNodeMap.get(node);
-    this.database.updateItem(nestedNode!, newName);
-  }
+  // /** Save the node to database */
+  // saveNode(node: TodoItemFlatNode, newName: string) {
+  //   const nestedNode = this.flatNodeMap.get(node);
+  //   this.database.updateItem(nestedNode!, newName);
+  // }
 
   handleDragStart(event: any, node: any) {
     // Required by Firefox (https://stackoverflow.com/questions/19055264/why-doesnt-html5-drag-and-drop-work-in-firefox)
@@ -232,8 +262,6 @@ export class InteractiveListComponent implements OnInit {
 
       newItem.isFile = dragNode!.isFile;
       newItem.parentName = dragNode!.parentName;
-      newItem.isFocused = dragNode!.isFocused;
-      newItem.isOpened = dragNode!.isOpened;
 
       this.database.deleteItem(this.flatNodeMap.get(this.dragNode)!);
       this.treeControl.expandDescendants(this.nestedNodeMap.get(newItem)!);
@@ -246,14 +274,9 @@ export class InteractiveListComponent implements OnInit {
   }
 
   handleDragEnd(event: any) {
-    // this.dragNode = null;
-    // this.dragNodeExpandOverNode = null;
-    // this.dragNodeExpandOverTime = 0;
-  }
-
-  openContextMenu(event: any, node: TodoItemFlatNode) {
-    event.preventDefault();
-    console.log(node);
+    this.dragNode = null;
+    this.dragNodeExpandOverNode = null;
+    this.dragNodeExpandOverTime = 0;
   }
 
   isDraggingOver(node: TodoItemFlatNode) {
@@ -266,36 +289,159 @@ export class InteractiveListComponent implements OnInit {
     return node.id === this.dragNodeExpandOverNode?.id || isFileInExpandedDirectory || isDragNodeOverFileNode || isParentOfDragNode;
   }
 
-  isFocused(node: TodoItemFlatNode) {
-    return this.focusedFile && this.focusedFile!.id === node.id;
+  toggleWorkspace(node: TodoItemFlatNode) {
+    this.treeControl.toggle(node);
   }
 
-  isOpened(node: TodoItemFlatNode) {
-    return this.focusedFile && this.focusedFile!.id === node.id;
+  isFocused(node: TodoItemFlatNode) {
+    return this.focusedFile?.id === node.id;
+  }
+
+  isDefocused(node: TodoItemFlatNode) {
+    return node.id === this.defocusedFile?.id;
   }
 
   setFocus(node: TodoItemNode) {
     this.FileObserver.focusedFileObserver(node);
+    this.FileObserver.defocusedFileObserver(node);
   }
 
   removeFocus() {
     this.FileObserver.focusedFileObserver(null);
   }
 
+  doubleClickHandle(node: TodoItemFlatNode) {
+    this.clickCount++;
+    setTimeout(() => {
+      if (this.clickCount === 1) {
+        this.selectFile(node);
+      } else if (this.clickCount === 2) {
+        this.openNewFile();
+      }
+      this.clickCount = 0;
+    }, 250)
+  }
+
+  openNewFile() {
+    this.FileObserver.openedFilesObserver(this.openedFiles?.map(node => ({...node, isOpenedNew: null}))!);
+  }
+
   selectFile(node: TodoItemFlatNode) {
     const focusedNode = this.flatNodeMap.get(node);
+    this.FileObserver.openedFilesObserver(this.openedFiles?.concat({ ...focusedNode!, isOpenedNew: true }!)!);
     if (node.name === 'treeContainer') {
       this.treeControl.toggle(node);
     }
     this.setFocus(focusedNode!);
+    this.database.updateItem(node, { ...node, isDefocused: true });
   }
 
   getDirectoryClasses(node: TodoItemFlatNode) {
     return {
       'drop-center': this.dragNodeExpandOverArea === 'center' && this.dragNodeExpandOverNode === node,
       'focused': this.isFocused(node),
-      'opened': this.isOpened(node),
-      'dragging-over': this.isDraggingOver(node)
+      'opened': this.isDefocused(node),
+      'dragging-over': this.isDraggingOver(node),
+      'changing-name': node.isChangingName
     }
   }
+
+  getFileClasses(node: TodoItemFlatNode) {
+    return {
+      'drop-center': this.dragNodeExpandOverArea === 'center' && this.dragNodeExpandOverNode === node,
+      'focused': this.isFocused(node),
+      'opened': this.isDefocused(node),
+      'dragging-over': this.isDraggingOver(node),
+      'changing-name': node.isChangingName
+    }
+  }
+
+  openContextMenu(event: any, node: TodoItemFlatNode) {
+    event.preventDefault();
+
+    const { x, y } = event;
+    this.closeContextMenu();
+
+    const positionStrategy = this.overlay.position()
+      .flexibleConnectedTo({ x: x + 310, y: y })
+      .withPositions([
+        {
+          originX: 'end',
+          originY: 'bottom',
+          overlayX: 'end',
+          overlayY: 'top',
+        }
+      ]);
+
+    this.overlayRef = this.overlay.create({
+      positionStrategy,
+      scrollStrategy: this.overlay.scrollStrategies.close()
+    });
+
+    this.overlayRef.attach(new TemplatePortal(this.contextMenu, this.viewContainerRef, {
+      $implicit: node
+    }));
+
+    this.sub = fromEvent<MouseEvent>(document, 'click')
+      .pipe(
+        filter(event => {
+          const clickTarget = event.target as HTMLElement;
+          return !!this.overlayRef && !this.overlayRef.overlayElement.contains(clickTarget);
+        }),
+        take(1)
+      ).subscribe(() => this.closeContextMenu())
+
+  }
+
+  closeContextMenu() {
+    this.sub && this.sub.unsubscribe();
+    if (this.overlayRef) {
+      this.overlayRef.dispose();
+      this.overlayRef = null;
+    }
+  }
+
+  async createNewNode(node: TodoItemFlatNode, type: string) {
+    const parentNode = this.flatNodeMap.get(node);
+    const newNode = await this.database.insertItem(
+      parentNode!,
+      {
+        children: [],
+        name: '',
+        isFile: type === 'file' ? true : false,
+        parentName: type === 'file' ? node.name : null,
+        id: '',
+        isChangingName: true,
+      },
+      true);
+    this.treeControl.expand(node);
+    this.treeControl.expand(this.nestedNodeMap.get(newNode!)!);
+
+    this.closeContextMenu();
+    this.isChangingNamePossible = true;
+  }
+
+  inputChange(node: TodoItemFlatNode, event: any) {
+    if (this.isChangingNamePossible) {
+      this.isChangingNamePossible = false;
+      const { target: { value } } = event;
+      const nestedNode = this.flatNodeMap.get(node)!;
+
+      if (value.length < 1 || this.database.getParentFromNodes(nestedNode)?.children.find(childNode => childNode.name === value)) {
+        this.database.deleteItem(nestedNode);
+      } else {
+        this.database.updateItem(nestedNode, { ...nestedNode, name: value, isChangingName: false }, true);
+      }
+      this.nodeInput.nativeElement.remove();
+    }
+  }
+
+  changeNodeName(node: TodoItemFlatNode) {
+    const nestedNode = this.flatNodeMap.get(node)!;
+
+    this.database.updateItem(nestedNode, { ...nestedNode, isChangingName: true });
+    this.isChangingNamePossible = true;
+    this.closeContextMenu();
+  }
+
 }

@@ -13,11 +13,20 @@ export class FileObserver {
     private focusedFile = new Subject<TodoItemNode | null>();
     focusedFileSubscriber$ = this.focusedFile;
 
+    private defocusedFile = new Subject<TodoItemNode | null>();
+    defocusedFileSubscriber$ = this.defocusedFile;
+
     openedFilesObserver(newArray: TodoItemNode[]) {
+        console.log(newArray);
+        
         this.openedFiles.next(newArray);
     }
 
     focusedFileObserver(newFocusedFile: TodoItemNode | null) {
         this.focusedFile.next(newFocusedFile);
+    }
+
+    defocusedFileObserver(newDefocusedFile: TodoItemNode | null) {
+        this.defocusedFile.next(newDefocusedFile);
     }
 } 

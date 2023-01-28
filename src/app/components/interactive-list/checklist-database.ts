@@ -12,9 +12,10 @@ export class TodoItemNode {
     name: string = '';
     isFile: boolean = false;
     parentName: string | null = null;
-    isFocused?: boolean;
-    isOpened?: boolean;
+    isDefocused?: boolean;
     id!: string;
+    isChangingName?: boolean;
+    isOpenedNew?: boolean | null;
 }
 
 /** Flat to-do item node with expandable and level information */
@@ -23,9 +24,9 @@ export class TodoItemFlatNode {
     level: number = 0;
     expandable: boolean = false;
     isFile: boolean = false;
-    isFocused?: boolean;
-    isOpened?: boolean;
+    isDefocused?: boolean;
     id!: string;
+    isChangingName?: boolean;
 }
 
 /**
@@ -38,7 +39,7 @@ const dirTree = {
                 type: 'file',
                 state: null,
             },
-            Groceries: {
+            groceries: {
                 children: {
                     'console.js': {
                         type: 'file',
@@ -175,9 +176,13 @@ export class ChecklistDatabase {
     }
 
     /** Add an item to to-do list */
-    async insertItem(parent: TodoItemNode, newNode: TodoItemNode, isChildren?: boolean): Promise<TodoItemNode | undefined> {
+    async insertItem(parent: TodoItemNode, newNode: TodoItemNode, isCreating: boolean, isChildren?: boolean): Promise<TodoItemNode | undefined> {
 
-        if (!isChildren) {
+        if (!parent.children) {
+            parent.children = [];
+        }
+
+        if (!isChildren && !isCreating) {
             const isMoving = await this.openDialog(`Do you want to move ${newNode.name} into ${parent.name}?`, 'Move', 'Cancel');
 
             if (!isMoving) {
@@ -196,22 +201,28 @@ export class ChecklistDatabase {
             }
 
             if (parent.children) {
+                // removing replacable item
                 const childIndexToDelete = parent.children.findIndex(child => child?.name === newNode?.name);
 
                 delete parent.children[childIndexToDelete]
             }
+            // removing new item from prev parent
+            const prevParent = this.getParentFromNodes(newNode);
+            const childIndexToDelete = prevParent?.children.findIndex(child => child?.name === newNode?.name);
+            delete prevParent?.children[childIndexToDelete!]
         }
 
-        if (!parent.children) {
-            parent.children = [];
-        }
         const parentName = parent.name;
-        const { name, id, isFile, isFocused, isOpened } = newNode;
-        const newItem = { name, id, isFile, isFocused, isOpened, parentName } as TodoItemNode;
+        const { name, id, isFile, isDefocused, isChangingName } = newNode;
+        const newItem = { name, id, isFile, isDefocused, parentName, isChangingName } as TodoItemNode;
+
+        if (!newItem.id) {
+            newItem.id = uuid.v4();
+        }
 
         parent.children.push(newItem);
         parent.children = parent.children.sort((a, b) => {
-            const isDirVsFile = Number(a.isFile) - Number(b.isFile);
+            const isDirVsFile: number = Number(a.isFile) - Number(b.isFile);
 
             return isDirVsFile ? isDirVsFile : a.name.localeCompare(b.name);
         });
@@ -221,8 +232,7 @@ export class ChecklistDatabase {
     }
 
     async copyPasteItem(from: TodoItemNode, to: TodoItemNode, isChildren?: boolean): Promise<TodoItemNode | undefined> {
-        const newItem = await this.insertItem(to, from, isChildren);
-        console.log('gag');
+        const newItem = await this.insertItem(to, from, false, isChildren);
 
         if (!newItem) {
             return;
@@ -235,7 +245,6 @@ export class ChecklistDatabase {
         return new Promise((res, rej) => {
             res(newItem);
         });
-        return newItem;
     }
 
     // insertItemAbove(node: TodoItemNode, name: string): TodoItemNode {
@@ -290,22 +299,17 @@ export class ChecklistDatabase {
         return null;
     }
 
-    updateItem(node: TodoItemNode, name: string) {
-        node.name = name;
+    updateItem(node: any, changedNode: any, isNewNode?: boolean) {
+        Object.keys(changedNode).forEach(key => node[key] = changedNode[key]);
+        if (isNewNode) {
+            const parent = this.getParentFromNodes(node);
+            parent!.children = parent!.children.sort((a, b) => {
+                const isDirVsFile = Number(a.isFile) - Number(b.isFile);
 
-        this.dataChange.next(this.data);
-    }
-
-    setFocus(newNode: TodoItemNode, prevNode?: TodoItemNode) {
-        if (prevNode) {
-            prevNode.isFocused = false;
+                return isDirVsFile ? isDirVsFile : a.name.localeCompare(b.name);
+            });
         }
-        newNode.isFocused = true;
-        this.dataChange.next(this.data);
-    }
-
-    removeFocus(node: TodoItemNode) {
-        node.isFocused = false;
+        
         this.dataChange.next(this.data);
     }
 
