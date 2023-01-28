@@ -17,15 +17,15 @@ export class SidePanelComponent {
     if (typeof (event.rectangle.width) == 'number') {
       if (event.rectangle.width > 75) {
         this.width = 150;
-        this.sidePanelObserver.fileObserver(150);
+        this.sidePanelObserver.sidePanelWidthObserver(150);
       }
       if (event.rectangle.width < 75) {
         this.width = 0;
-        this.sidePanelObserver.fileObserver(0);
+        this.sidePanelObserver.sidePanelWidthObserver(0);
       }
       if (event.rectangle.width > 150) {
         this.width = event.rectangle.width;
-        this.sidePanelObserver.fileObserver(event.rectangle.width);
+        this.sidePanelObserver.sidePanelWidthObserver(event.rectangle.width);
       }
     }
   }

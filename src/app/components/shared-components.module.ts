@@ -12,6 +12,8 @@ import { MatTreeModule } from '@angular/material/tree';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCheckboxModule } from '@angular/material/checkbox';
+import { DialogComponent } from './dialog/dialog.component';
+import { MatDialogModule } from '@angular/material/dialog';
 
 @NgModule({
   declarations: [
@@ -19,14 +21,16 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
     MonacoEditorComponent,
     SidePanelComponent,
     SideNavComponent,
-    InteractiveListComponent
+    InteractiveListComponent,
+    DialogComponent
   ],
   exports: [
     HeaderComponent,
     MonacoEditorComponent,
     SidePanelComponent,
     SideNavComponent,
-    InteractiveListComponent
+    InteractiveListComponent,
+    DialogComponent
   ],
   imports: [
     ResizableModule,
@@ -37,6 +41,7 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
     MatIconModule,
     MatButtonModule,
     MatCheckboxModule,
+    MatDialogModule,
   ],
   providers: [],
   bootstrap: []

@@ -2,6 +2,7 @@
 @import '~@angular/cdk/overlay-prebuilt.css';
 @import url("https://fonts.googleapis.com/icon?family=Material+Icons");
 
+$grey05: #1e1e1e66;
 $grey10: #1e1e1e;
 $grey20: #252526;
 $grey30: #333333;
@@ -23,6 +24,7 @@ $inverted-color: invert(100%);
 body {
     padding: 0;
     margin: 0;
+    font-family: sans-serif;
 }
 
 .side-nav-tooltip {
