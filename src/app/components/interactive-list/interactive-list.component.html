@@ -15,7 +15,7 @@
         </button>
     </mat-tree-node>
 
-    <mat-tree-node (click)="selectFile(node)" *matTreeNodeDef="let node; when isFile" matTreeNodeToggle>
+    <mat-tree-node (click)="doubleClickHandle(node)" *matTreeNodeDef="let node; when isFile" matTreeNodeToggle>
         <!-- (contextmenu)="openContextMenu($event, node)" -->
         <button id="workspace" [ngClass]="getFileClasses(node)" (change)="checklistSelection.toggle(node);"
             draggable="true" (dragstart)="handleDragStart($event, node);" (dragover)="handleDragOver($event, node);"

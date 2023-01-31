@@ -49,6 +49,7 @@ export class InteractiveListComponent implements OnInit {
 
   focusedFile: TodoItemNode | null = null;
   defocusedFile: TodoItemNode | null = null;
+  currentOpenedFile: TodoItemNode | null = null;
   openedFiles: TodoItemNode[] | undefined;
 
   overlayRef!: OverlayRef | null;
@@ -98,6 +99,11 @@ export class InteractiveListComponent implements OnInit {
     this.FileObserver.openedFilesSubscriber$
       .subscribe(openedFiles => {
         this.openedFiles = openedFiles;
+      });
+
+    this.FileObserver.currentOpenedFileSubscriber$
+      .subscribe(currentOpenedFile => {
+        this.currentOpenedFile = currentOpenedFile;
       });
 
     const firstElement = [...this.flatNodeMap][0][0];
@@ -312,23 +318,45 @@ export class InteractiveListComponent implements OnInit {
 
   doubleClickHandle(node: TodoItemFlatNode) {
     this.clickCount++;
+    this.selectFile(node);
     setTimeout(() => {
-      if (this.clickCount === 1) {
-        this.selectFile(node);
-      } else if (this.clickCount === 2) {
-        this.openNewFile();
+      if (this.clickCount === 2) {
+        this.openNewFile(this.flatNodeMap.get(node)!);
       }
       this.clickCount = 0;
     }, 250)
   }
 
-  openNewFile() {
-    this.FileObserver.openedFilesObserver(this.openedFiles?.map(node => ({...node, isOpenedNew: null}))!);
+  openNewFile(newNode: TodoItemNode) {
+    const openedNewIndex = this.openedFiles?.findIndex(node => node.isOpenedNew && node.id === newNode.id);
+
+    if (this.openedFiles && this.openedFiles[openedNewIndex!]) {
+      this.openedFiles![openedNewIndex!].isOpenedNew = null;
+      this.FileObserver.openedFilesObserver([...this.openedFiles!]);
+      return;
+    }
   }
 
   selectFile(node: TodoItemFlatNode) {
     const focusedNode = this.flatNodeMap.get(node);
-    this.FileObserver.openedFilesObserver(this.openedFiles?.concat({ ...focusedNode!, isOpenedNew: true }!)!);
+
+    if (node.isFile) {
+      this.FileObserver.currentOpenedFileObserver(focusedNode!);
+      const isFileExist = this.openedFiles?.find(node => node.id === focusedNode!.id);
+      const openedNewIndex = this.openedFiles?.findIndex(node => node.isOpenedNew);
+      
+      if (this.openedFiles && !this.openedFiles[openedNewIndex!] && !isFileExist) {
+        this.FileObserver.openedFilesObserver([...this.openedFiles, { ...focusedNode!, isOpenedNew: true }]);
+      }
+      if (this.openedFiles && this.openedFiles[openedNewIndex!] && !isFileExist) {
+        this.openedFiles[openedNewIndex!] = { ...focusedNode!, isOpenedNew: true };
+        this.FileObserver.openedFilesObserver([...this.openedFiles]);
+      }
+      if (!this.openedFiles) {
+        this.FileObserver.openedFilesObserver([{ ...focusedNode!, isOpenedNew: true }]);
+      }
+    }
+
     if (node.name === 'treeContainer') {
       this.treeControl.toggle(node);
     }
@@ -427,7 +455,7 @@ export class InteractiveListComponent implements OnInit {
       const { target: { value } } = event;
       const nestedNode = this.flatNodeMap.get(node)!;
 
-      if (value.length < 1 || this.database.getParentFromNodes(nestedNode)?.children.find(childNode => childNode.name === value)) {
+      if (value.length < 1 || this.database.getParentFromNodes(nestedNode)?.children.find(childNode => childNode?.name === value)) {
         this.database.deleteItem(nestedNode);
       } else {
         this.database.updateItem(nestedNode, { ...nestedNode, name: value, isChangingName: false }, true);
@@ -437,6 +465,8 @@ export class InteractiveListComponent implements OnInit {
   }
 
   changeNodeName(node: TodoItemFlatNode) {
+    console.log(node);
+    
     const nestedNode = this.flatNodeMap.get(node)!;
 
     this.database.updateItem(nestedNode, { ...nestedNode, isChangingName: true });

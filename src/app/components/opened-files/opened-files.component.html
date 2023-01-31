@@ -1,0 +1,12 @@
+<ng-scrollbar *ngIf="openedFiles && openedFiles.length > 0" style="height: 26px;">
+    <div id="scrollbar-container" [style.width.px]="width" class="container">
+        <div (click)="doubleClick(file)" *ngFor="let file of openedFiles;" class=" opened-file"
+            [ngClass]="{'current-opened': currentOpenedFile && currentOpenedFile.id === file.id}">
+            <img class="file-type-icon" [src]="renderIcon(file.name)" alt="file-type">
+            <span [ngClass]="{'new-file': file.isOpenedNew}">{{file.name}}</span>
+            <button (click)="closeFile(file)" class="close-icon">
+                &#9587;
+            </button>
+        </div>
+    </div>
+</ng-scrollbar>
