@@ -1,0 +1,108 @@
+@import "../../../styles.scss";
+
+.container {
+    display: flex;
+    overflow-x: scroll;
+    background-color: $grey30;
+
+    &::-webkit-scrollbar {
+        width: 2px;
+        height: 2px;
+    }
+    &::-webkit-scrollbar-button {
+        width: 0px;
+        height: 0px;
+    }
+    &::-webkit-scrollbar-thumb {
+        background: #e1e1e1;
+        border: 0px none #ffffff;
+        border-radius: 50px;
+    }
+    &::-webkit-scrollbar-thumb:hover {
+        background: #ffffff;
+    }
+    &::-webkit-scrollbar-thumb:active {
+        background: #000000;
+    }
+    &::-webkit-scrollbar-track {
+        background: #666666;
+        border: 0px none #ffffff;
+        border-radius: 50px;
+    }
+    &::-webkit-scrollbar-track:hover {
+        background: #666666;
+    }
+    &::-webkit-scrollbar-track:active {
+        background: #333333;
+    }
+    &::-webkit-scrollbar-corner {
+        background: transparent;
+    }
+}
+
+.opened-file {
+    display: flex;
+    align-items: center;
+    padding: 0.25rem 2rem 0.25rem 0.5rem;
+    background-color: rgba(255, 255, 255, 0.05);
+    font-size: 14px;
+    font-weight: 100;
+    color: rgba(255, 255, 255, 0.8);
+    border: 0.5px solid rgb(35, 35, 35, 0.4);
+    border-top: 0;
+    border-bottom: 0;
+    cursor: pointer;
+    position: relative;
+
+    span {
+        width: max-content;
+
+        -webkit-user-select: none; /* Safari */
+        -ms-user-select: none; /* IE 10 and IE 11 */
+        user-select: none;
+
+        &.new-file {
+            font-style: italic;
+        }
+    }
+
+    .close-icon {
+        display: none;
+        cursor: pointer;
+        width: 14px;
+        height: 14px;
+        padding: 0;
+        margin: 0;
+        background-color: transparent;
+        border: 0;
+        position: absolute;
+        right: 10px;
+        font-size: 7px;
+        color: rgba(255, 255, 255, 0.8);
+    }
+
+    &:hover {
+        .close-icon {
+            display: block;
+
+            &:hover {
+                border-radius: 3px;
+                background-color: #ffffff22;
+            }
+        }
+    }
+
+    &.current-opened {
+        background-color: $grey10;
+
+        .close-icon {
+            display: block;
+            color: white;
+        }
+    }
+}
+
+.file-type-icon {
+    width: 18px;
+    height: 18px;
+}

@@ -16,6 +16,7 @@ export class TodoItemNode {
     id!: string;
     isChangingName?: boolean;
     isOpenedNew?: boolean | null;
+    innerText?: string;
 }
 
 /** Flat to-do item node with expandable and level information */
@@ -37,20 +38,24 @@ const dirTree = {
         children: {
             'console.js': {
                 type: 'file',
+                innerText: `geg');`,
                 state: null,
             },
             groceries: {
                 children: {
                     'console.js': {
                         type: 'file',
+                        innerText: `console.log('Welcome to Web-Editor');`,
                         state: null,
                     },
                     'Organiceggs.ts': {
                         type: 'file',
+                        innerText: `console.log('geg');`,
                         state: null,
                     },
                     'Protein Powder.jsx': {
                         type: 'file',
+                        innerText: `console.log('core');`,
                         state: null,
                     },
                     'geg': {
@@ -61,16 +66,19 @@ const dirTree = {
                         children: {
                             Apple: {
                                 type: 'file',
+                                innerText: ``,
                                 state: null,
                             },
                             Berries: {
                                 children: {
                                     'Blueberry.js': {
                                         type: 'file',
+                                        innerText: ``,
                                         state: null,
                                     },
                                     'Raspberry.ts': {
                                         type: 'file',
+                                        innerText: ``,
                                         state: null,
                                     },
                                 },
@@ -79,6 +87,7 @@ const dirTree = {
                             },
                             Orange: {
                                 type: 'file',
+                                innerText: ``,
                                 state: null,
                             },
                         },
@@ -89,14 +98,17 @@ const dirTree = {
                         children: {
                             'Cook dinner': {
                                 type: 'file',
+                                innerText: ``,
                                 state: null,
                             },
                             'Read the Material Design spec': {
                                 type: 'file',
+                                innerText: ``,
                                 state: null,
                             },
                             'Upgrade Application to Angular': {
                                 type: 'file',
+                                innerText: ``,
                                 state: null,
                             }
                         },
@@ -148,6 +160,7 @@ export class ChecklistDatabase {
             node.isFile = obj[key].type === 'file' || false;
             node.parentName = parentName;
             node.id = uuid.v4();
+            node.innerText = obj[key].innerText || '';
 
             if (typeof value === 'object' && value.children) {
                 node.children = this.buildFileTree(value.children, level + 1, level + 1 > 0 ? key : null);
@@ -309,7 +322,7 @@ export class ChecklistDatabase {
                 return isDirVsFile ? isDirVsFile : a.name.localeCompare(b.name);
             });
         }
-        
+
         this.dataChange.next(this.data);
     }
 

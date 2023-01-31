@@ -14,6 +14,8 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { DialogComponent } from './dialog/dialog.component';
 import { MatDialogModule } from '@angular/material/dialog';
+import { OpenedFilesComponent } from './opened-files/opened-files.component';
+import { NgScrollbarModule } from 'ngx-scrollbar';
 
 @NgModule({
   declarations: [
@@ -22,7 +24,8 @@ import { MatDialogModule } from '@angular/material/dialog';
     SidePanelComponent,
     SideNavComponent,
     InteractiveListComponent,
-    DialogComponent
+    DialogComponent,
+    OpenedFilesComponent
   ],
   exports: [
     HeaderComponent,
@@ -42,6 +45,11 @@ import { MatDialogModule } from '@angular/material/dialog';
     MatButtonModule,
     MatCheckboxModule,
     MatDialogModule,
+    NgScrollbarModule.withConfig({
+      track: 'horizontal',
+      visibility: 'hover',
+      minThumbSize: 3
+    })
   ],
   providers: [],
   bootstrap: []
